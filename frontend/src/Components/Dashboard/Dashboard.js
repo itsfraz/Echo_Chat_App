@@ -16,6 +16,7 @@ import { API_URL } from '../../config';
 import echoLogo from '../../assets/echo_logo.png';
 import { logout as logoutService } from '../../Services/authService';
 import { Helmet } from 'react-helmet-async';
+import Icon from '../UI/Icon';
 import toast from 'react-hot-toast';
 
 function Dashboard() {
@@ -160,57 +161,80 @@ function Dashboard() {
         {/* User Actions */}
         <div className="flex items-center space-x-2 md:space-x-4">
            {/* Theme Toggle */}
-           <button 
-             onClick={toggleTheme} 
-             className={`p-2 rounded-full transition duration-300 ${theme === 'dark' ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+           <motion.button
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+             onClick={toggleTheme}
+             className={`p-2.5 rounded-full transition duration-300 ${theme === 'dark' ? 'bg-neutral-700 text-warning hover:bg-neutral-600' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}
            >
-             {theme === 'dark' ? '☀️' : '🌙'}
-           </button>
+             <Icon name={theme === 'dark' ? 'sun' : 'moon'} size="md" />
+           </motion.button>
            {/* Notification Bell */}
            <div className="relative">
-             <button 
+             <motion.button
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
                onClick={() => setShowNotifications(!showNotifications)}
-               className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition relative"
+               className={`p-2.5 rounded-full transition relative flex items-center justify-center ${theme === 'dark' ? 'hover:bg-neutral-700' : 'hover:bg-neutral-100'}`}
              >
-               <span className="text-xl">🔔</span>
+               <Icon name="bell" size="md" className={theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'} />
                {notifications.length > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                 <motion.span
+                   initial={{ scale: 0 }}
+                   animate={{ scale: 1 }}
+                   className="absolute -top-1 -right-1 bg-error text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-neutral-900"
+                 >
                    {notifications.length}
-                 </span>
+                 </motion.span>
                )}
-             </button>
-             
+             </motion.button>
+
              {/* Notification Dropdown */}
              {showNotifications && (
-               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-                 <div className="p-3 border-b bg-gray-50 flex justify-between items-center">
-                   <h3 className="font-bold text-gray-700">Notifications</h3>
+               <motion.div
+                 initial={{ opacity: 0, y: -10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -10 }}
+                 className={`absolute right-0 mt-2 w-96 rounded-xl shadow-elevation-3 border ${theme === 'dark' ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'} overflow-hidden z-50`}
+               >
+                 <div className={`px-4 py-3 border-b flex justify-between items-center ${theme === 'dark' ? 'bg-neutral-800/50 border-neutral-700' : 'bg-neutral-50 border-neutral-200'}`}>
+                   <h3 className={`font-semibold ${theme === 'dark' ? 'text-neutral-50' : 'text-neutral-900'}`}>Notifications</h3>
                    {notifications.length > 0 && (
-                     <button onClick={() => dispatch(clearNotifications())} className="text-xs text-blue-600 hover:text-blue-800">
-                       Mark all as read
-                     </button>
+                     <motion.button
+                       whileHover={{ scale: 1.05 }}
+                       onClick={() => dispatch(clearNotifications())}
+                       className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition"
+                     >
+                       Clear all
+                     </motion.button>
                    )}
                  </div>
-                 <div className="max-h-80 overflow-y-auto">
+                 <div className="max-h-96 overflow-y-auto">
                    {notifications.length > 0 ? (
                      notifications.map((notif, i) => (
-                       <div key={i} className="p-3 border-b hover:bg-gray-50 flex items-start gap-3 transition">
+                       <motion.div
+                         key={i}
+                         initial={{ opacity: 0, x: -10 }}
+                         animate={{ opacity: 1, x: 0 }}
+                         transition={{ delay: i * 0.05 }}
+                         className={`px-4 py-3 border-b flex items-start gap-3 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/30 ${theme === 'dark' ? 'border-neutral-800' : 'border-neutral-200'}`}
+                       >
                           <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
-                             notif.type === 'message' ? 'bg-green-500' : 'bg-blue-500'
+                             notif.type === 'message' ? 'bg-success' : 'bg-primary-500'
                           }`}></div>
-                          <div>
-                            <p className="text-sm text-gray-800 leading-snug">{notif.message}</p>
-                            <p className="text-xs text-gray-500 mt-1">Just now</p>
+                          <div className="flex-1">
+                            <p className={`text-sm leading-snug ${theme === 'dark' ? 'text-neutral-100' : 'text-neutral-800'}`}>{notif.message}</p>
+                            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-neutral-500' : 'text-neutral-500'}`}>Just now</p>
                           </div>
-                       </div>
+                       </motion.div>
                      ))
                    ) : (
-                     <div className="p-8 text-center text-gray-500 text-sm">
-                       No new notifications
+                     <div className={`p-8 text-center text-sm ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                       All caught up!
                      </div>
                    )}
                  </div>
-               </div>
+               </motion.div>
              )}
            </div>
 
@@ -272,22 +296,32 @@ function Dashboard() {
                  </div>
 
                  <div className="w-full mt-2 space-y-2">
-                    <Link to="/edit-profile" className={`flex items-center justify-center space-x-2 w-full py-2 font-medium rounded-full transition duration-200 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
-                       <span className="text-xl">✏️</span>
+                    <Link to="/edit-profile" className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 transform hover:scale-105 active:scale-95 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-200' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'}`}>
+                       <Icon name="edit" size="md" />
                        <span>Edit Profile</span>
                     </Link>
-                    <Link to="/change-password" className={`flex items-center justify-center space-x-2 w-full py-2 font-medium rounded-full transition duration-200 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
-                       <span className="text-xl">🔒</span>
+                    <Link to="/change-password" className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 transform hover:scale-105 active:scale-95 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-200' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'}`}>
+                       <Icon name="lock" size="md" />
                        <span>Change Password</span>
                     </Link>
-                    <button onClick={handleDeleteProfile} className={`flex items-center justify-center space-x-2 w-full py-2 font-medium rounded-full transition duration-200 ${theme === 'dark' ? 'bg-gray-700 hover:bg-red-900 text-red-400' : 'bg-gray-100 hover:bg-red-100 text-red-600'}`}>
-                       <span className="text-xl">🗑️</span>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDeleteProfile}
+                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-error' : 'bg-neutral-100 hover:bg-error/10 text-error'}`}
+                    >
+                       <Icon name="trash" size="md" />
                        <span>Delete Profile</span>
-                    </button>
-                    <button onClick={handleSignOut} className={`flex items-center justify-center space-x-2 w-full py-2 font-medium rounded-full transition duration-200 ${theme === 'dark' ? 'bg-gray-700 hover:bg-red-900 text-red-400' : 'bg-gray-100 hover:bg-red-100 text-red-600'}`}>
-                       <span className="text-xl">🚪</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSignOut}
+                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-error' : 'bg-neutral-100 hover:bg-error/10 text-error'}`}
+                    >
+                       <Icon name="logout" size="md" />
                        <span>Sign Out</span>
-                    </button>
+                    </motion.button>
                  </div>
               </div>
            </div>
@@ -339,29 +373,36 @@ function Dashboard() {
       </motion.div>
 
       {/* Mobile Bottom Navigation */}
-      <div className={`md:hidden fixed bottom-0 left-0 right-0 border-t flex justify-around items-center py-3 z-50 backdrop-blur-md ${theme === 'dark' ? 'bg-glass-dark border-white/10' : 'bg-glass-light/90 border-white/20'}`}>
-        <button 
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className={`md:hidden fixed bottom-0 left-0 right-0 border-t flex justify-around items-center py-2 z-40 backdrop-blur-md ${theme === 'dark' ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-neutral-200'}`}
+      >
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('feed')}
-          className={`flex flex-col items-center ${activeTab === 'feed' ? 'text-blue-600' : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`}
+          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'feed' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
-          <span className="text-2xl">🏠</span>
-          <span className="text-xs">Home</span>
-        </button>
-        <button 
+          <Icon name="home" size="lg" />
+          <span className="text-xs mt-1 font-medium">Home</span>
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('contacts')}
-          className={`flex flex-col items-center ${activeTab === 'contacts' ? 'text-blue-600' : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`}
+          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'contacts' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
-          <span className="text-2xl">👥</span>
-          <span className="text-xs">Friends</span>
-        </button>
-        <button 
+          <Icon name="users" size="lg" />
+          <span className="text-xs mt-1 font-medium">Friends</span>
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('profile')}
-          className={`flex flex-col items-center ${activeTab === 'profile' ? 'text-blue-600' : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`}
+          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'profile' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
-          <span className="text-2xl">👤</span>
-          <span className="text-xs">Profile</span>
-        </button>
-      </div>
+          <Icon name="user" size="lg" />
+          <span className="text-xs mt-1 font-medium">Profile</span>
+        </motion.button>
+      </motion.div>
 
     </div>
   );
