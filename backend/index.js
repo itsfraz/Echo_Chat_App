@@ -24,25 +24,20 @@ const app = express();
 const server = http.createServer(app);
 
 // Initialize Socket.IO
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim());
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      'https://guftugu.netlify.app',
-      'https://mybatt.netlify.app',
-      'http://localhost:3000'
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   },
 });
 
-// Middleware
 app.use(cors({
-  origin: [
-    'https://guftugu.netlify.app',
-    'https://mybatt.netlify.app',
-    'http://localhost:3000'
-  ],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
