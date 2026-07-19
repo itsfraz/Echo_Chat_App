@@ -2,26 +2,34 @@ import React, { useState } from 'react';
 import { login } from '../../Services/authService';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../../config';
-
 import { Helmet } from 'react-helmet-async';
+import { motion, AnimatePresence } from 'framer-motion';
+import Icon from '../UI/Icon';
+import echoLogo from '../../assets/echo_logo.png';
 
 function Login() {
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError(''); // Clear error on typing
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    
     try {
       const response = await login(formData);
       if (!response.data.token || !response.data.userId) {
         setError('Invalid response from the server. Please try again.');
+        setIsLoading(false);
         return;
       }
 
@@ -29,137 +37,161 @@ function Login() {
       localStorage.setItem('userId', response.data.userId);
 
       setSuccess('Login successful!');
-      setError('');
       setTimeout(() => {
         navigate('/dashboard');
-      }, 2000);
+      }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong. Please try again.');
-      setSuccess('');
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-50 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 p-4 relative overflow-hidden font-sans">
       <Helmet>
         <title>Login - Echo</title>
         <meta name="description" content="Login to Echo Chat App" />
       </Helmet>
-      <div className="flex w-full h-full max-w-[1600px] shadow-2xl rounded-none md:rounded-2xl overflow-hidden bg-white">
-        
-        {/* Left Side - Visual & Branding (Hidden on mobile) */}
-        <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 items-center justify-center relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-full h-full bg-black opacity-10"></div>
-           <div className="z-10 text-center text-white px-10">
-              <h1 className="text-5xl font-extrabold mb-4">Welcome Back!</h1>
-              <p className="text-lg opacity-90 mb-8">Login to access your dashboard and connect with your friends.</p>
-              <div className="inline-block p-4 bg-white/20 backdrop-blur-md rounded-full shadow-lg">
-                 <span className="text-4xl">👋</span>
-              </div>
-           </div>
-           {/* Decorative Circles */}
-           <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse"></div>
-           <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse animation-delay-2000"></div>
-        </div>
+      
+      {/* Decorative Animated Background Orbs */}
+      <motion.div 
+        animate={{ scale: [1, 1.1, 1], rotate: [0, 90, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-purple-600/30 rounded-full mix-blend-screen filter blur-[100px]"
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], rotate: [0, -90, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-[-10%] right-[-10%] w-[35vw] h-[35vw] bg-blue-600/20 rounded-full mix-blend-screen filter blur-[100px]"
+      />
 
-        {/* Right Side - Form */}
-        <div className="w-full md:w-1/2 h-full overflow-y-auto p-8 md:p-12 flex flex-col justify-center relative">
-          
-          <div className="max-w-md mx-auto w-full">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Login</h2>
-            <p className="text-gray-500 mb-8 text-sm">Please enter your credentials to continue.</p>
-
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 mb-4 text-xs rounded" role="alert">
-                <p>{error}</p>
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-3 mb-4 text-xs rounded" role="alert">
-                <p>{success}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Username */}
-              <div className="relative">
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">Username</label>
-                <div className="relative">
-                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">@</span>
-                   <input
-                     type="text"
-                     name="username"
-                     placeholder="Enter your username"
-                     onChange={handleChange}
-                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-sm transition"
-                     required
-                   />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div className="relative">
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">Password</label>
-                <div className="relative">
-                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔒</span>
-                   <input
-                     type={showPassword ? 'text' : 'password'}
-                     name="password"
-                     placeholder="Enter your password"
-                     onChange={handleChange}
-                     className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-sm transition"
-                     required
-                   />
-                   <button
-                     type="button"
-                     onClick={() => setShowPassword(!showPassword)}
-                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-gray-500 hover:text-blue-600 transition"
-                   >
-                     {showPassword ? 'Hide' : 'Show'}
-                   </button>
-                </div>
-                <div className="text-right mt-1">
-                  <Link to="/forgot-password" className="text-xs text-blue-500 hover:underline">Forgot Password?</Link>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition duration-200 text-sm"
-              >
-                Login
-              </button>
-            </form>
-
-            <div className="mt-8 text-center">
-               <p className="text-sm text-gray-500">
-                  Don't have an account?{' '}
-                  <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
-                     Sign Up
-                  </Link>
-               </p>
+      {/* Main Glassmorphism Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 relative z-10"
+      >
+        {/* Logo and Header */}
+        <div className="text-center mb-8">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            className="flex justify-center mb-4"
+          >
+            <div className="bg-white/10 p-3 rounded-2xl border border-white/20 shadow-lg">
+              <img src={echoLogo} alt="Echo Logo" className="w-12 h-12 object-contain" />
             </div>
-
-             {/* Divider for potential social logins */}
-             <div className="my-6 flex items-center justify-between">
-                <span className="w-1/5 border-b lg:w-1/4"></span>
-                <span className="text-xs text-center text-gray-400 uppercase">or continue with</span>
-                <span className="w-1/5 border-b lg:w-1/4"></span>
-             </div>
-             
-             <div className="flex justify-center gap-4">
-                 <button className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
-                    <span className="text-xl">Google</span> 
-                 </button>
-                 <button className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
-                    <span className="text-xl">Github</span>
-                 </button>
-             </div>
-
-          </div>
+          </motion.div>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h2>
+          <p className="text-purple-200/80 text-sm">Sign in to continue to Echo.</p>
         </div>
-      </div>
+
+        {/* Notifications */}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 mb-6 rounded-xl text-sm flex items-center gap-2 overflow-hidden"
+            >
+              <Icon name="loading" size="sm" className="hidden" /> {/* Placeholder if icon needed later */}
+              <p>{error}</p>
+            </motion.div>
+          )}
+          {success && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 p-3 mb-6 rounded-xl text-sm flex items-center gap-2 overflow-hidden"
+            >
+              <Icon name="check" size="sm" />
+              <p>{success}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Username Input */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-purple-100 pl-1 block">Username</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-300/50 group-focus-within:text-purple-300 transition-colors">
+                <Icon name="user" size="sm" />
+              </div>
+              <input
+                type="text"
+                name="username"
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder-purple-300/30 transition-all text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Password Input */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center pl-1 pr-1">
+              <label className="text-sm font-medium text-purple-100 block">Password</label>
+              <Link to="/forgot-password" className="text-xs text-purple-300 hover:text-white transition-colors">Forgot Password?</Link>
+            </div>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-300/50 group-focus-within:text-purple-300 transition-colors">
+                <Icon name="lock" size="sm" />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full pl-10 pr-12 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder-purple-300/30 transition-all text-sm"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-purple-300/50 hover:text-white transition-colors focus:outline-none"
+              >
+                <Icon name={showPassword ? 'eyeOff' : 'eye'} size="sm" />
+              </button>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3.5 rounded-xl font-semibold shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(124,58,237,0.5)] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Icon name="loading" size="sm" />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <span>Log In</span>
+            )}
+          </motion.button>
+        </form>
+
+        {/* Signup Link */}
+        <div className="mt-8 text-center border-t border-white/10 pt-6">
+          <p className="text-sm text-purple-200/80">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-white font-semibold hover:text-purple-300 transition-colors">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
