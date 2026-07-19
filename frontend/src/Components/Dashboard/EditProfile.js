@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config';
+import { compressImage } from '../../utils/imageCompressor';
 
 function EditProfile() {
   const [name, setName] = useState('');
@@ -44,8 +45,15 @@ function EditProfile() {
     formData.append('bio', bio);
     formData.append('work', work);
     formData.append('location', location);
+    
     if (profilePicture) {
-      formData.append('profilePicture', profilePicture);
+      let compressedFile = profilePicture;
+      try {
+        compressedFile = await compressImage(profilePicture, 256, 256, 0.85);
+      } catch (compressErr) {
+        console.error('Failed to compress avatar, using original', compressErr);
+      }
+      formData.append('profilePicture', compressedFile);
     }
 
     try {

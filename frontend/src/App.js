@@ -10,6 +10,8 @@ import { SocketProvider } from './context/SocketContext';
 import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './Components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { fetchUserProfile } from './features/auth/authSlice';
 
 // Lazy load components for performance
 const Dashboard = lazy(() => import('./Components/Dashboard/Dashboard'));
@@ -39,6 +41,33 @@ const Loading = () => (
   </motion.div>
 );
 
+// AuthCheck wrapper validates token on startup
+const AuthCheck = ({ children }) => {
+  const [checking, setChecking] = useState(true);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+      
+      if (token && userId) {
+        try {
+          // Unwrap the thunk to catch errors if the token is invalid
+          await dispatch(fetchUserProfile(userId)).unwrap();
+        } catch (error) {
+          console.error("Session validation failed", error);
+        }
+      }
+      setChecking(false);
+    };
+    initAuth();
+  }, [dispatch]);
+
+  if (checking) return <Loading />;
+  return children;
+};
+
 // Page transition variants
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -67,8 +96,9 @@ const AnimatedRoutes = () => {
         transition={pageTransition}
         className="w-full"
       >
-        <Routes location={location}>
-          <Route
+        <Suspense fallback={<Loading />}>
+          <Routes location={location}>
+            <Route
             path="/"
             element={<Navigate to="/login" />}
           />
@@ -115,21 +145,14 @@ const AnimatedRoutes = () => {
           />
 
           <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
 };
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'));
-
-  useEffect(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    setToken(null);
-  }, []);
-
   return (
     <HelmetProvider>
       <ThemeProvider>
@@ -165,9 +188,9 @@ function App() {
               }}
             />
             <ErrorBoundary>
-              <Suspense fallback={<Loading />}>
+              <AuthCheck>
                 <AnimatedRoutes />
-              </Suspense>
+              </AuthCheck>
             </ErrorBoundary>
           </Router>
         </SocketProvider>

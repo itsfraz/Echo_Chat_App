@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import api from '../../Services/authService';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import SocketContext from '../../context/SocketContext';
@@ -10,6 +10,7 @@ import ChatHeader from './ChatHeader';
 import { useTheme } from '../../context/ThemeContext';
 import Icon from '../UI/Icon';
 import toast from 'react-hot-toast';
+import { compressImage } from '../../utils/imageCompressor';
 
 const Chat = () => {
   const [conversations, setConversations] = useState([]);
@@ -18,7 +19,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [currentFriend, setCurrentFriend] = useState(null);
   const [isFriendTyping, setIsFriendTyping] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 768);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const { socket } = useContext(SocketContext);
   const { theme } = useTheme();
@@ -67,9 +68,13 @@ const Chat = () => {
     if (conversationId && conversations.length > 0) {
       const selectedConversation = conversations.find((conv) => conv._id === conversationId);
       if (selectedConversation) {
-        setCurrentChat(selectedConversation);
+        if (currentChat?._id !== selectedConversation._id) {
+          setMessages([]); // Clear messages immediately to avoid flashing stale data
+          setCurrentChat(selectedConversation);
+        }
       } else if (location.state?.friend) {
         if (currentChat?._id !== conversationId) {
+          setMessages([]); // Clear messages immediately to avoid flashing stale data
           const newConversation = {
             _id: conversationId,
             members: [userId, location.state.friend._id],
@@ -171,8 +176,15 @@ const Chat = () => {
     let imagePath = '';
 
     if (image) {
+      let compressedFile = image;
+      try {
+        compressedFile = await compressImage(image, 1200, 1200, 0.8);
+      } catch (compressErr) {
+        console.error('Image compression failed, uploading original', compressErr);
+      }
+
       const formData = new FormData();
-      formData.append('image', image);
+      formData.append('image', compressedFile);
       try {
         const res = await api.post(`/api/chat/upload`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -195,20 +207,59 @@ const Chat = () => {
     socket.emit('send-message', message);
   };
 
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div className={`flex h-screen ${theme === 'dark' ? 'bg-neutral-950' : 'bg-neutral-50'}`}>
+    <div className={`flex h-dvh ${theme === 'dark' ? 'bg-neutral-950 text-white' : 'bg-neutral-50 text-neutral-900'}`}>
+      {/* Mobile Drawer Sidebar */}
+      <AnimatePresence>
+        {showSidebar && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0.05 : 0.2 }}
+              onClick={() => setShowSidebar(false)}
+              className="md:hidden fixed inset-0 bg-black z-50 backdrop-blur-xs"
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={shouldReduceMotion ? { duration: 0.05 } : { type: 'spring', damping: 25, stiffness: 200 }}
+              className={`md:hidden fixed inset-y-0 left-0 w-[280px] sm:w-[320px] z-50 shadow-elevation-3 border-r ${
+                theme === 'dark' ? 'border-neutral-800 bg-neutral-900' : 'border-neutral-200 bg-white'
+              } flex flex-col`}
+            >
+              <ConversationList
+                conversations={conversations}
+                setCurrentChat={(chat) => {
+                  navigate(`/chat/${chat._id}`);
+                  setShowSidebar(false);
+                }}
+                currentChat={currentChat}
+                isLoading={conversationsLoading}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Sidebar - Conversations List */}
       <motion.div
         initial={false}
         animate={{ width: showSidebar ? 320 : 0, opacity: showSidebar ? 1 : 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        transition={shouldReduceMotion ? { duration: 0.05 } : { type: 'spring', stiffness: 300, damping: 30 }}
         className={`hidden md:block relative border-r ${
           theme === 'dark' ? 'border-neutral-800 bg-neutral-900' : 'border-neutral-200 bg-white'
         } overflow-hidden`}
       >
         <ConversationList
           conversations={conversations}
-          setCurrentChat={setCurrentChat}
+          setCurrentChat={(chat) => navigate(`/chat/${chat._id}`)}
           currentChat={currentChat}
           isLoading={conversationsLoading}
         />
@@ -229,6 +280,7 @@ const Chat = () => {
                 currentFriend={currentFriend}
                 isFriendTyping={isFriendTyping}
                 onBack={() => navigate('/dashboard')}
+                onToggleSidebar={() => setShowSidebar(!showSidebar)}
               />
               <MessageList messages={messages} currentFriend={currentFriend} />
               <MessageInput handleSendMessage={handleSendMessage} onTyping={handleTyping} />
@@ -238,10 +290,17 @@ const Chat = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex-1 flex flex-col items-center justify-center ${
+            className={`flex-1 flex flex-col items-center justify-center relative ${
               theme === 'dark' ? 'bg-neutral-900' : 'bg-white'
             }`}
           >
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="md:hidden absolute top-4 left-4 h-11 w-11 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors text-neutral-600 dark:text-neutral-400"
+              title="Go to Dashboard"
+            >
+              <Icon name="arrow-left" size="lg" />
+            </button>
             <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
               theme === 'dark'
                 ? 'bg-primary-900/30'

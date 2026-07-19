@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import toast from 'react-hot-toast';
+import Avatar from '../UI/Avatar';
+import Icon from '../UI/Icon';
 
 function SearchUsers({ setRequestSent }) {
   const [query, setQuery] = useState('');
@@ -79,48 +81,53 @@ function SearchUsers({ setRequestSent }) {
   };
 
   return (
-    <div className="w-full relative">
-      <div className="flex flex-row gap-2">
-        <div className="relative flex-1">
+    <div className="w-full relative flex-1 min-w-0">
+      <div className="flex flex-row gap-2 items-center">
+        <div className="relative flex-1 min-w-0">
              <input
                type="text"
                placeholder="Search..."
                value={query}
                onChange={(e) => setQuery(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-               className="w-full pl-8 md:pl-10 pr-4 py-1.5 md:py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs md:text-sm bg-gray-100 text-gray-800"
+               className="w-full px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-neutral-200 dark:border-neutral-750 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-500"
              />
-             <span className="absolute left-2.5 top-2 md:top-2.5 text-xs md:text-base text-gray-500">🔍</span>
         </div>
         <button
           onClick={handleSearch}
-          className="bg-blue-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-full hover:bg-blue-700 transition text-xs md:text-sm font-medium"
+          className="bg-primary-600 text-white flex items-center justify-center rounded-full hover:bg-primary-700 active:bg-primary-800 active:scale-95 transition-all flex-shrink-0 w-11 h-11 sm:w-10 sm:h-10"
           disabled={loading}
+          title="Search users"
         >
-          {loading ? '...' : <span className="md:inline">Search</span>}
+          {loading ? (
+             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Icon name="search" size="md" />
+          )}
         </button>
       </div>
 
-      {error && <p className="text-red-500 text-xs absolute top-full mt-1 bg-white p-1 rounded shadow">{error}</p>}
+      {error && <p className="text-error text-xs absolute top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850 p-1.5 rounded-lg shadow-elevation-1 z-50">{error}</p>}
 
       {results.length > 0 && (
-          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 max-h-96 overflow-y-auto">
-             <div className="p-2 border-b bg-gray-50 flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-500">Results</span>
-                <button onClick={() => setResults([])} className="text-xs text-red-500 hover:text-red-700">Close</button>
+          <div className="absolute top-full -right-2 sm:right-auto sm:left-0 w-[270px] sm:w-full mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-elevation-3 border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 max-h-96 overflow-y-auto">
+             <div className="p-2 border-b bg-neutral-50 dark:bg-neutral-850 border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
+                <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Results</span>
+                <button onClick={() => setResults([])} className="text-xs text-error hover:text-error/85 font-medium px-2 py-1">Close</button>
              </div>
-             <ul className="divide-y divide-gray-100">
+             <ul className="divide-y divide-neutral-100 dark:divide-neutral-850">
                 {results.map((user) => (
-                  <li key={user._id} className="flex justify-between items-center p-3 hover:bg-gray-50 transition">
-                    <div className="flex items-center">
-                      <img
-                        src={user.profilePicture ? `${API_URL}/${user.profilePicture}` : "https://via.placeholder.com/40"}
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full mr-3 object-cover"
+                  <li key={user._id} className="flex justify-between items-center p-2 sm:p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition gap-2">
+                    <div className="flex items-center min-w-0 flex-1 flex-grow mr-1 sm:mr-2">
+                      <Avatar
+                        src={user.profilePicture}
+                        alt={user.name || user.username}
+                        size="w-8 h-8 sm:w-9 sm:h-9"
+                        className="mr-2 sm:mr-3 flex-shrink-0"
                       />
-                      <div>
-                        <p className="font-semibold text-sm text-gray-800">{user.name || user.username}</p>
-                        <p className="text-xs text-gray-500">@{user.username}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 truncate">{user.name || user.username}</p>
+                        <p className="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 truncate">@{user.username}</p>
                       </div>
                     </div>
                     <button
@@ -129,12 +136,12 @@ function SearchUsers({ setRequestSent }) {
                             handleAddFriend(user._id);
                          }
                       }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                      className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold transition flex-shrink-0 ${
                         user.requestStatus === 'sent'
-                          ? 'bg-gray-100 text-gray-500'
+                          ? 'bg-neutral-100 text-neutral-450 dark:bg-neutral-800 dark:text-neutral-550'
                           : user.requestStatus === 'received'
-                          ? 'bg-yellow-100 text-yellow-600' 
-                          : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                          ? 'bg-warning/15 text-warning dark:bg-warning/25' 
+                          : 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50'
                       }`}
                       disabled={user.requestStatus === 'sent'}
                     >

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import toast from 'react-hot-toast';
+import Avatar from '../UI/Avatar';
 
 function PendingFriendRequests({ requestSent }) {
   const [requests, setRequests] = useState([]);
@@ -97,33 +98,34 @@ function PendingFriendRequests({ requestSent }) {
       {requests.length > 0 ? (
         <ul className="space-y-4">
           {requests.map((request) => (
-            <li key={request._id} className="flex flex-col sm:flex-row justify-between items-center bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center mb-2 sm:mb-0">
+            <li key={request._id} className="flex flex-col sm:flex-row justify-between items-center bg-gray-50 dark:bg-neutral-800/50 p-3 rounded-lg border border-neutral-100 dark:border-neutral-800/80 gap-3 w-full">
+              <div className="flex items-center min-w-0 flex-1 mr-2 w-full">
                  {request.from && (
-                    <img 
-                      src={request.from.profilePicture ? `${API_URL}/${request.from.profilePicture}` : "https://via.placeholder.com/40"} 
-                      alt="Avatar" 
-                      className="w-10 h-10 rounded-full object-cover mr-3"
+                    <Avatar
+                      src={request.from.profilePicture}
+                      alt={request.from.name || request.from.username || "Avatar"}
+                      size="w-10 h-10"
+                      className="mr-3 flex-shrink-0"
                     />
                  )}
-                 <div>
-                    <span className="font-semibold text-gray-800 text-sm block">
+                 <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-gray-800 dark:text-neutral-100 text-sm block truncate">
                         {request.from ? request.from.name || request.from.username : 'Unknown User'}
                     </span>
-                    <span className="text-xs text-gray-500">wants to be friends</span>
+                    <span className="text-xs text-gray-500 dark:text-neutral-400 block truncate">wants to be friends</span>
                  </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-shrink-0">
                 <button
                   onClick={() => handleAccept(request._id)}
-                  className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                  className="bg-blue-600 text-white h-10 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex-1 sm:flex-none flex items-center justify-center"
                 >
                   Confirm
                 </button>
                 <button
                   onClick={() => handleReject(request._id)}
-                  className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
+                  className="bg-gray-200 text-gray-700 dark:bg-neutral-700 dark:text-neutral-200 h-10 px-4 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-neutral-600 transition flex-1 sm:flex-none flex items-center justify-center"
                 >
                   Delete
                 </button>

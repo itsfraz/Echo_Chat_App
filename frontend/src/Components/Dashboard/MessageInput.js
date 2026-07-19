@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Icon from '../UI/Icon';
 
 const MessageInput = ({ handleSendMessage, onTyping }) => {
@@ -35,11 +35,13 @@ const MessageInput = ({ handleSendMessage, onTyping }) => {
     }
   };
 
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ y: 20, opacity: 0 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { y: 15, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="sticky bottom-0 bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 shadow-elevation-2 p-4"
+      className="sticky bottom-0 bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 shadow-elevation-2 p-3 sm:p-4"
     >
       {imagePreview && (
         <motion.div
@@ -73,11 +75,12 @@ const MessageInput = ({ handleSendMessage, onTyping }) => {
 
       <form onSubmit={handleSubmit} className="flex items-end gap-3">
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex-shrink-0 p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 shadow-elevation-1 hover:shadow-elevation-2"
+          className="flex-shrink-0 h-11 w-11 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 shadow-elevation-1 hover:shadow-elevation-2"
+          title="Select image"
         >
           <Icon name="image" size="md" />
         </motion.button>
@@ -104,15 +107,15 @@ const MessageInput = ({ handleSendMessage, onTyping }) => {
               }
             }}
           />
-          <p className="text-xs text-neutral-400 mt-1 px-4">Shift + Enter for new line</p>
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
           type="submit"
           disabled={!text.trim() && !image}
-          className="flex-shrink-0 p-3 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-elevation-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-elevation-1 transition-all duration-200 shadow-elevation-2"
+          className="flex-shrink-0 h-11 w-11 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-elevation-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-elevation-1 transition-all duration-200 shadow-elevation-2"
+          title="Send message"
         >
           <Icon name="send" size="md" />
         </motion.button>

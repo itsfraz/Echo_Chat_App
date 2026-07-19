@@ -1,25 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import api from '../../Services/authService';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchFriends } from '../../features/friends/friendsSlice';
 import { useTheme } from '../../context/ThemeContext';
-import { API_URL } from '../../config';
 import Icon from '../UI/Icon';
+import Avatar from '../UI/Avatar';
 
 function FriendsList() {
-  const dispatch = useDispatch();
-  const { list: friends, loading, error } = useSelector((state) => state.friends);
+  const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const navigate = useNavigate();
   const { theme } = useTheme();
   const userId = localStorage.getItem('userId');
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (userId && friends.length === 0) {
-      dispatch(fetchFriends(userId));
+    const fetchContacts = async () => {
+      try {
+        setLoading(true);
+        // Fetch conversations to match the Messages sidebar logic exactly
+        const convRes = await api.get(`/api/conversations/${userId}`);
+        const conversations = convRes.data;
+
+        // Fetch user data for each conversation partner
+        const usersMap = {};
+        for (const conversation of conversations) {
+          const friendId = conversation.members.find((member) => member !== userId);
+          if (friendId) {
+            if (conversation.friendData) {
+              usersMap[friendId] = conversation.friendData;
+            } else if (!usersMap[friendId]) {
+              try {
+                const response = await api.get(`/user/${friendId}`);
+                usersMap[friendId] = response.data;
+              } catch (err) {
+                console.error('Error fetching user:', err);
+              }
+            }
+          }
+        }
+        
+        setFriends(Object.values(usersMap));
+      } catch (err) {
+        console.error('Failed to load contacts', err);
+        setError('Failed to load contacts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchContacts();
     }
-  }, [userId, dispatch, friends.length]);
+  }, [userId]);
 
   const handleFriendClick = async (friend) => {
     try {
@@ -79,13 +114,13 @@ function FriendsList() {
           {friends.map((friend, index) => (
             <motion.li
               key={friend._id}
-              initial={{ opacity: 0, x: -10 }}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={shouldReduceMotion ? { duration: 0.05 } : { delay: index * 0.03 }}
               className="list-none"
             >
               <motion.button
-                whileHover={{ x: 4 }}
+                whileHover={shouldReduceMotion ? {} : { x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleFriendClick(friend)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition duration-200 ${
@@ -95,19 +130,12 @@ function FriendsList() {
                 }`}
               >
                 <div className="relative flex-shrink-0">
-                  {friend.profilePicture ? (
-                    <img
-                      src={`${API_URL}/${friend.profilePicture}`}
-                      alt="Profile"
-                      className="w-10 h-10 rounded-full object-cover shadow-elevation-1"
-                    />
-                  ) : (
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-neutral-700' : 'bg-neutral-300'
-                    }`}>
-                      <Icon name="user" size="sm" className={theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'} />
-                    </div>
-                  )}
+                  <Avatar
+                    src={friend.profilePicture}
+                    alt={friend.name || friend.username}
+                    size="w-10 h-10"
+                    className="shadow-elevation-1"
+                  />
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-white dark:border-neutral-900 shadow-elevation-1" />
                 </div>
 

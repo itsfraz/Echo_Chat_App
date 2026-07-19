@@ -200,14 +200,15 @@ app.post('/api/chat/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  res.status(200).json({ filePath: req.file.path });
+  res.status(200).json({ filePath: req.file.path.replace(/\\/g, '/') });
 });
 
 
 // Sign Up Route
 app.post('/signup', upload.single('profilePicture'), async (req, res) => {
+  // Get the file path and normalize backslashes to forward slashes (fixes Windows upload bug)
+  const profilePicture = req.file ? req.file.path.replace(/\\/g, '/') : '';
   const { username, password, name, email } = req.body;
-  const profilePicture = req.file ? req.file.path : ''; // Get the file path
 
   try {
     // Check if user already exists
@@ -733,7 +734,8 @@ app.delete('/delete-profile/:userId', async (req, res) => {
 app.put('/edit-profile/:userId', upload.single('profilePicture'), async (req, res) => {
   const { userId } = req.params;
   const { name, email, bio, work, location } = req.body;
-  const profilePicture = req.file ? req.file.path : '';
+  // Get the file path and normalize backslashes to forward slashes (fixes Windows upload bug)
+  const profilePicture = req.file ? req.file.path.replace(/\\/g, '/') : '';
 
   try {
     const updateData = { name, email, bio, work, location };

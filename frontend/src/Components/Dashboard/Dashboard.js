@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import axios from "axios";
 import FriendsList from "./FriendList";
 import FriendRecommendations from "./FriendRecommendations";
@@ -13,6 +13,7 @@ import { addNotification, clearNotifications } from "../../features/notification
 import SocketContext from "../../context/SocketContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_URL } from '../../config';
+import Avatar from '../UI/Avatar';
 import echoLogo from '../../assets/echo_logo.png';
 import { logout as logoutService } from '../../Services/authService';
 import { Helmet } from 'react-helmet-async';
@@ -34,6 +35,7 @@ function Dashboard() {
   const { theme, toggleTheme } = useTheme();
   
   const navigate = useNavigate();
+  const shouldReduceMotion = useReducedMotion();
   const userId = localStorage.getItem("userId");
   const { socket } = useContext(SocketContext);
 
@@ -243,15 +245,15 @@ function Dashboard() {
       </nav>
 
       <motion.div 
-        className="max-w-[1600px] mx-auto pt-6 px-4 md:px-8 grid grid-cols-1 md:grid-cols-[280px_1fr_300px] gap-6"
+        className={`max-w-[1600px] mx-auto pt-6 px-4 md:px-6 grid grid-cols-1 lg:grid-cols-[240px_1fr_260px] xl:grid-cols-[280px_1fr_300px] gap-6 ${activeTab === 'profile' ? 'md:grid-cols-[240px_1fr]' : 'md:grid-cols-[1fr_260px]'}`}
         initial="hidden"
         animate="visible"
         variants={{
           hidden: { opacity: 0 },
           visible: {
             opacity: 1,
-            transition: {
-              staggerChildren: 0.2
+            transition: shouldReduceMotion ? { duration: 0.05 } : {
+              staggerChildren: 0.1
             }
           }
         }}
@@ -259,19 +261,20 @@ function Dashboard() {
         
         {/* Left Sidebar - Navigation & Profile */}
         <motion.div 
-          className={`${activeTab === 'profile' ? 'block' : 'hidden'} md:block space-y-4`}
+          className={`${activeTab === 'profile' ? 'block' : 'hidden'} lg:block space-y-4`}
           variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+            hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 15 },
+            visible: { opacity: 1, y: 0, transition: shouldReduceMotion ? { duration: 0.05 } : { type: "spring", stiffness: 120, damping: 15 } }
           }}
         >
            {/* Profile Card */}
-           <div className={`rounded-xl shadow-lg p-4 hover:shadow-xl transition backdrop-blur-md border border-white/20 ${theme === 'dark' ? 'bg-glass-dark text-white' : 'bg-glass-light text-gray-800'}`}>
+           <div className={`rounded-xl shadow-md p-4 hover:shadow-lg transition border ${theme === 'dark' ? 'bg-neutral-900 border-neutral-800 text-white' : 'bg-white border-neutral-200 text-gray-800'}`}>
               <div className="flex flex-col items-center">
-                 <img
-                  src={user?.profilePicture ? `${API_URL}/${user.profilePicture}` : "https://via.placeholder.com/80"}
-                  alt="Profile"
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-gray-100 mb-2"
+                 <Avatar
+                  src={user?.profilePicture}
+                  alt={user?.name || "Profile"}
+                  size="w-20 h-20"
+                  className="ring-4 ring-gray-100 dark:ring-neutral-800 mb-2"
                  />
                  <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{user?.name}</h2>
                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>@{user?.username}</p>
@@ -308,7 +311,7 @@ function Dashboard() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleDeleteProfile}
-                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-error' : 'bg-neutral-100 hover:bg-error/10 text-error'}`}
+                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 transform hover:scale-105 active:scale-95 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-neutral-200 hover:text-error' : 'bg-neutral-100 hover:bg-error/10 text-neutral-700 hover:text-error'}`}
                     >
                        <Icon name="trash" size="md" />
                        <span>Delete Profile</span>
@@ -317,7 +320,7 @@ function Dashboard() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleSignOut}
-                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-error' : 'bg-neutral-100 hover:bg-error/10 text-error'}`}
+                      className={`flex items-center justify-center space-x-2 w-full py-2.5 font-medium rounded-lg transition duration-200 transform hover:scale-105 active:scale-95 shadow-elevation-1 hover:shadow-elevation-2 ${theme === 'dark' ? 'bg-neutral-700 hover:bg-error/20 text-neutral-200 hover:text-error' : 'bg-neutral-100 hover:bg-error/10 text-neutral-700 hover:text-error'}`}
                     >
                        <Icon name="logout" size="md" />
                        <span>Sign Out</span>
@@ -331,12 +334,12 @@ function Dashboard() {
         <motion.div 
           className={`${activeTab === 'feed' ? 'block' : 'hidden'} md:block space-y-6 pb-10`}
           variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+            hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 15 },
+            visible: { opacity: 1, y: 0, transition: shouldReduceMotion ? { duration: 0.05 } : { type: "spring", stiffness: 120, damping: 15 } }
           }}
         >
            {/* Pending Requests */}
-           <div className={`rounded-xl shadow-lg p-4 md:p-6 backdrop-blur-md border border-white/20 ${theme === 'dark' ? 'bg-glass-dark' : 'bg-glass-light'}`}>
+           <div className={`rounded-xl shadow-md p-4 md:p-6 border ${theme === 'dark' ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
              <h3 className={`text-xl font-bold mb-4 border-b pb-2 ${theme === 'dark' ? 'text-white border-gray-700' : 'text-gray-800'}`}>Friend Requests</h3>
              <PendingFriendRequests 
                 requestSent={requestSent} 
@@ -345,7 +348,7 @@ function Dashboard() {
            </div>
 
            {/* Recommendations */}
-           <div className={`rounded-xl shadow-lg p-4 md:p-6 backdrop-blur-md border border-white/20 ${theme === 'dark' ? 'bg-glass-dark' : 'bg-glass-light'}`}>
+           <div className={`rounded-xl shadow-md p-4 md:p-6 border ${theme === 'dark' ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
              <h3 className={`text-xl font-bold mb-4 border-b pb-2 ${theme === 'dark' ? 'text-white border-gray-700' : 'text-gray-800'}`}>People You May Know</h3>
              <FriendRecommendations />
            </div>
@@ -353,14 +356,14 @@ function Dashboard() {
 
         {/* Right Sidebar - Contacts */}
         <motion.div 
-          className={`${activeTab === 'contacts' ? 'block' : 'hidden'} md:block`}
+          className={`${activeTab === 'contacts' ? 'block' : 'hidden'} md:block ${activeTab === 'profile' ? 'md:hidden lg:block' : ''}`}
           variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+            hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 15 },
+            visible: { opacity: 1, y: 0, transition: shouldReduceMotion ? { duration: 0.05 } : { type: "spring", stiffness: 120, damping: 15 } }
           }}
         >
            <div className="sticky top-20">
-              <div className={`rounded-xl shadow-lg p-4 h-[calc(100vh-100px)] overflow-y-auto backdrop-blur-md border border-white/20 ${theme === 'dark' ? 'bg-glass-dark text-white' : 'bg-glass-light text-gray-800'}`}>
+              <div className={`rounded-xl shadow-md p-4 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] overflow-y-auto border ${theme === 'dark' ? 'bg-neutral-900 border-neutral-800 text-white' : 'bg-white border-neutral-200 text-gray-800'}`}>
                  <div className="flex items-center justify-between mb-4">
                     <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Contacts</h3>
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -376,31 +379,31 @@ function Dashboard() {
       <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className={`md:hidden fixed bottom-0 left-0 right-0 border-t flex justify-around items-center py-2 z-40 backdrop-blur-md ${theme === 'dark' ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-neutral-200'}`}
+        className={`md:hidden fixed bottom-0 left-0 right-0 border-t flex justify-around items-center h-16 z-40 backdrop-blur-md ${theme === 'dark' ? 'bg-neutral-900/95 border-neutral-800' : 'bg-white/95 border-neutral-200'}`}
       >
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('feed')}
-          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'feed' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
+          className={`flex flex-col items-center justify-center w-full h-full transition duration-200 ${activeTab === 'feed' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
           <Icon name="home" size="lg" />
-          <span className="text-xs mt-1 font-medium">Home</span>
+          <span className="text-[10px] mt-0.5 font-medium">Home</span>
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('contacts')}
-          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'contacts' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
+          className={`flex flex-col items-center justify-center w-full h-full transition duration-200 ${activeTab === 'contacts' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
           <Icon name="users" size="lg" />
-          <span className="text-xs mt-1 font-medium">Friends</span>
+          <span className="text-[10px] mt-0.5 font-medium">Friends</span>
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setActiveTab('profile')}
-          className={`flex flex-col items-center py-2 px-4 rounded-lg transition duration-200 ${activeTab === 'profile' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
+          className={`flex flex-col items-center justify-center w-full h-full transition duration-200 ${activeTab === 'profile' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : (theme === 'dark' ? 'text-neutral-400 hover:text-neutral-300' : 'text-neutral-500 hover:text-neutral-700')}`}
         >
           <Icon name="user" size="lg" />
-          <span className="text-xs mt-1 font-medium">Profile</span>
+          <span className="text-[10px] mt-0.5 font-medium">Profile</span>
         </motion.button>
       </motion.div>
 

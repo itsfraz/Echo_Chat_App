@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import { useTheme } from '../../context/ThemeContext';
 import Icon from '../UI/Icon';
+import Avatar from '../UI/Avatar';
 
 const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoading }) => {
   const [users, setUsers] = useState({});
   const { theme } = useTheme();
   const userId = localStorage.getItem('userId');
+  const shouldReduceMotion = useReducedMotion();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -28,7 +32,9 @@ const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoadin
           }
         }
       }
-      setUsers((prevUsers) => ({ ...prevUsers, ...newUsers }));
+      if (Object.keys(newUsers).length > 0) {
+        setUsers((prevUsers) => ({ ...prevUsers, ...newUsers }));
+      }
     };
 
     fetchUsers();
@@ -38,7 +44,7 @@ const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoadin
     <div className={`h-full flex flex-col ${
       theme === 'dark' ? 'bg-neutral-900' : 'bg-white'
     }`}>
-      <div className={`px-6 py-4 border-b ${
+      <div className={`px-6 py-4 border-b flex justify-between items-center ${
         theme === 'dark' ? 'border-neutral-800' : 'border-neutral-200'
       }`}>
         <h2 className={`text-xl font-bold ${
@@ -46,6 +52,13 @@ const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoadin
         }`}>
           Messages
         </h2>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="md:hidden h-10 w-10 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors text-neutral-600 dark:text-neutral-400"
+          title="Go to Dashboard"
+        >
+          <Icon name="arrow-left" size="lg" />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-1 p-2">
@@ -123,10 +136,10 @@ const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoadin
             return (
               <motion.button
                 key={conversation._id}
-                initial={{ opacity: 0, x: -10 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ x: 4 }}
+                transition={shouldReduceMotion ? { duration: 0.05 } : { delay: index * 0.03 }}
+                whileHover={shouldReduceMotion ? {} : { x: 4 }}
                 onClick={() => setCurrentChat(conversation)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg mx-2 transition-all duration-200 relative group ${
                   isSelected
@@ -139,19 +152,12 @@ const ConversationList = ({ conversations, setCurrentChat, currentChat, isLoadin
                 }`}
               >
                 <div className="relative flex-shrink-0">
-                  {friend?.profilePicture ? (
-                    <img
-                      src={`${API_URL}/${friend.profilePicture}`}
-                      alt={friend.name}
-                      className="w-12 h-12 rounded-full object-cover shadow-elevation-1"
-                    />
-                  ) : (
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      theme === 'dark' ? 'bg-neutral-700' : 'bg-neutral-300'
-                    }`}>
-                      <Icon name="user" size="md" className={theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'} />
-                    </div>
-                  )}
+                  <Avatar
+                    src={friend?.profilePicture}
+                    alt={friend?.name || friend?.username}
+                    size="w-12 h-12"
+                    className="shadow-elevation-1"
+                  />
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-white dark:border-neutral-900 shadow-elevation-1" />
                 </div>
 

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { API_URL } from '../../config';
+import Avatar from '../UI/Avatar';
 import Icon from '../UI/Icon';
 
 const MessageList = ({ messages, currentFriend }) => {
   const userId = localStorage.getItem('userId');
   const messagesEndRef = React.useRef(null);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,17 +40,18 @@ const MessageList = ({ messages, currentFriend }) => {
         return (
           <motion.div
             key={index}
-            layout
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            layout={shouldReduceMotion ? false : "position"}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 5 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            transition={shouldReduceMotion ? { duration: 0.05 } : { type: 'spring', stiffness: 250, damping: 25 }}
             className={`flex ${isSender ? 'justify-end' : 'justify-start'} gap-2 group`}
           >
-            {!isSender && currentFriend?.profilePicture && (
-              <img
-                src={`${API_URL}/${currentFriend.profilePicture}`}
-                alt="Avatar"
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            {!isSender && (
+              <Avatar
+                src={currentFriend?.profilePicture}
+                alt={currentFriend?.name || "Avatar"}
+                size="w-8 h-8"
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
               />
             )}
 
@@ -61,7 +64,11 @@ const MessageList = ({ messages, currentFriend }) => {
                 <img
                   src={`${API_URL}/${message.image}`}
                   alt="shared"
-                  className="max-w-full rounded-lg mb-2 max-h-60 transition-transform hover:scale-105"
+                  width={320}
+                  height={240}
+                  loading="lazy"
+                  className="max-w-full rounded-lg mb-2 max-h-60 object-cover w-auto h-auto transition-transform hover:scale-102 block"
+                  style={{ minWidth: '120px', minHeight: '80px', aspectRatio: '4/3' }}
                 />
               )}
               {message.text && (
